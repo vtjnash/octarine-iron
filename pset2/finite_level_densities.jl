@@ -2,6 +2,7 @@
 
 module GOE_Finite_Level_Densities
 using Winston
+#using Calculus
 export demoGOE, demoGUE
 
 ### To be added to Base:
@@ -19,38 +20,57 @@ HermiteH_I(n::Integer, x::FloatingPoint) = HermiteH(n-1, 0.0) - exp(-x^2)*Hermit
 phi(n::Integer, x::FloatingPoint) = 1/sqrt(2^n*factorial(n)*sqrt(pi))*exp(-x^2/2)*HermiteH(n, x)
 phi_D(n::Integer, x::FloatingPoint) = 1/sqrt(2^n*factorial(n)*sqrt(pi))*(-x*exp(-x^2/2)*HermiteH(n, x) + exp(-x^2/2)*HermiteH_D(n, x))
 phi_I(n::Integer, x::FloatingPoint) = (delta=x*.001; (x == 0 ? 0 : sum((x)->delta*phi(n,x),0:delta:x))) # Euler numerical integration
+#phi_I(n::Integer, x::FloatingPoint) = integrate((x)->phi(n,float(x)),0.0,x) # numerical integration
 #phi_I(n::Integer, x::FloatingPoint) = 1/sqrt(2^n*factorial(n)*sqrt(pi))* ???
 
 eigDensityGUE(n::Integer, x::FloatingPoint) = sum((k)->phi(k,x)^2, 0:(n-1))
 #eigDensityGUE(n::Integer, x::FloatingPoint) = n*phi(n,x)^2-sqrt(n*(n+1))*phi(n-1,x)*phi(n+1,x)
-plot_eigDensityGUE(n::Integer) = plot([eigDensityGUE(n, float(x)) for x=-6:.02:6]) #note: N can be a regular Int, or a BigInt!
+plot_eigDensityGUE(n::Integer) = (xs=-6:.1:6; plot(xs, [eigDensityGUE(n, float(x)) for x=xs])) #note: N can be a regular Int, or a BigInt!
 
 eigDensityGOE(n::Integer, x::FloatingPoint) = sum((k)->phi(2k,x)^2-phi_D(2k,x)*phi_I(2k,x), 0:(div(n,2)-1))
-plot_eigDensityGOE(n::Integer) = plot([eigDensityGOE(n, float(x)) for x=-6:.1:6])
+plot_eigDensityGOE(n::Integer) = (xs=-6:.1:6; plot(xs, [eigDensityGOE(n, float(x)) for x=xs]))
 
 pause() = (print("Press <enter> to continue"); readline(STDIN); nothing)
 
-function demoGUE()
+demoGUE() = demoGUE(nothing, Any[1,4,16,BigInt(24),BigInt(32),BigInt(48),BigInt(64)])
+function demoGUE(filename::Union(String,Nothing), range)
     println("Type Ctrl-C to cancel at any time")
-    for i = Any[1,4,16,BigInt(24),BigInt(32),BigInt(48),BigInt(64)]
+    for i = range
         println("plot_eigDensityGUE($i)")
-        plot_eigDensityGUE(i); pause()
+        p=plot_eigDensityGUE(i)
+        setattr(p, "title", "")
+        setattr(p, "title", "GUE Eig Density - N=$i")
+        Winston.display(p)
+        if isa(filename,String)
+            file(p, "$(filename)_$(i).png")
+        else
+            pause()
+        end
     end
 end
-function demoGOE()
+
+demoGOE() = demoGOE(nothing, 1:20)
+function demoGOE(filename::Union(String,Nothing), range)
     println("Type Ctrl-C to cancel at any time")
-    for i = 2:2:40
+    for i = range*2
+        local p
         println("plot_eigDensityGOE($i)")
         try
-            plot_eigDensityGOE(i)
+            p=plot_eigDensityGOE(i)
         catch e
             if isa(e, DomainError)
-                plot_eigDensityGOE(BigInt(i))
+                p=plot_eigDensityGOE(BigInt(i))
             else
                 rethrow()
             end
         end
-        pause()
+        setattr(p, "title", "GOE Eig Density - N=$i")
+        Winston.display(p)
+        if isa(filename,String)
+            file(p, "$(filename)_$(i).png")
+        else
+            pause()
+        end
     end
 end
     
