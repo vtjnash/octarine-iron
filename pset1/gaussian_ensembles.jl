@@ -29,7 +29,6 @@ function demo1(k,filename::Union(String,Nothing))
     println()
     n = 10
     beta = 1
-    v = 0.0
     step = 1000
     xmax = 12000
     runs = 40
@@ -51,10 +50,52 @@ function demo1(k,filename::Union(String,Nothing))
     end
 end
 
+demo2() = demo2_hist(2,nothing)
+function demo2_hist(n,filename::Union(String,Nothing))
+    nbins = 50
+    beta = 1
+    k = 2
+    t = 40000
+    v = samples(n,beta,k,t)
+    step = (max(v)-min(v))/nbins
+    b = min(v) : step : max(v)
+    a = hist(v,b);
+    b += step/2 # center the bin
+    xx=(0:.01:1)*max(b)
+    j=n*(n-1)*beta/2+n
+    x=xx*(n^2/2)
+    p = plot( xx, ((n^2/2)*x.^(j/2-1).*exp(-x/2)/2^(j/2)/gamma(j/2)), "r-",
+        b, a/sum(a)/(b[2]-b[1]), "b-")
+    setattr(p, "title", "Demo2 (hist): n=$n, j=$j")
+    Winston.display(p)
+    if isa(filename,String)
+        file(p, "$(filename)_n=$n.png")
+    end
+end
+function demo2_kde(n,filename::Union(String,Nothing))
+    npoints = 50
+    beta = 1
+    k = 2
+    t = 40000
+    v = samples(n,beta,k,t)
+    a, b = kde(v,npoints);
+    xx=(0:.01:1)*max(b)
+    j=n*(n-1)*beta/2+n
+    x=xx*(n^2/2)
+    p = plot( xx, ((n^2/2)*x.^(j/2-1).*exp(-x/2)/2^(j/2)/gamma(j/2)), "r-",
+        b, a, "b-")
+    setattr(p, "title", "Demo2 (kde): n=$n, j=$j")
+    Winston.display(p)
+    if isa(filename,String)
+        file(p, "$(filename)_n=$n.png")
+    end
+end
+
+
 function demo()
     demo1()
     pause()
-
+    demo2()
 end
 
 end
