@@ -13,7 +13,6 @@ function sample_kth_moment(n,beta,k)
     mean(sample_eigs(n,beta).^k)
 end
 
-
 function samples(n,beta,k,t)
     v = zeros(t);
     for i = 1:t
@@ -73,7 +72,7 @@ function demo2_hist(n,filename::Union(String,Nothing))
     end
 end
 function demo2_kde(n,filename::Union(String,Nothing))
-    npoints = 50
+    npoints = 500
     beta = 1
     k = 2
     t = 40000
@@ -91,11 +90,76 @@ function demo2_kde(n,filename::Union(String,Nothing))
     end
 end
 
+demo5() = for n = [5:5:25; 50:50:500]
+        demo5_kde(n,nothing)
+        pause()
+    end
+function demo5_hist(n,filename::Union(String,Nothing))
+    nbins = sqrt(n)
+    beta = 1
+    e1 = sample_eigs(n,beta)
+    e2 = sample_eigs(n,beta)
+    e3 = sample_eigs(n,beta)
+    e4 = sample_eigs(n,beta)
+    step1 = (max(e1)-min(e1))/nbins
+    step2 = (max(e2)-min(e2))/nbins
+    step3 = (max(e3)-min(e3))/nbins
+    step4 = (max(e4)-min(e4))/nbins
+    b1 = min(e1) : step1 : max(e1)
+    b2 = min(e2) : step2 : max(e2)
+    b3 = min(e3) : step3 : max(e3)
+    b4 = min(e4) : step4 : max(e4)
+    b1 += step1/2
+    b2 += step2/2
+    b3 += step3/2
+    b4 += step4/2
+    a1 = hist(e1,b1);
+    a2 = hist(e2,b2);
+    a3 = hist(e3,b3);
+    a4 = hist(e4,b4);
+    x = [-2:0.01:2]
+    p = plot(x,sqrt(4-x.^2)/(2*pi),"r-",
+        b1, a1/sum(a1)/(b1[2]-b1[1]),"b-",
+        b2, a2/sum(a2)/(b2[2]-b2[1]),"g-",
+        b3, a3/sum(a3)/(b3[2]-b3[1]),"y-",
+        b4, a4/sum(a4)/(b4[2]-b4[1]),"-")
+    setattr(p, "title", "Demo5 (hist): n=$n")
+    Winston.display(p)
+    if isa(filename,String)
+        file(p, "$(filename)_n=$n.png")
+    end
+end
+function demo5_kde(n,filename::Union(String,Nothing))
+    npoints = 2000
+    beta = 1
+    e1 = sample_eigs(n,beta)
+    e2 = sample_eigs(n,beta)
+    e3 = sample_eigs(n,beta)
+    e4 = sample_eigs(n,beta)
+    a1,b1 = kde(e1,npoints);
+    a2,b2 = kde(e2,npoints);
+    a3,b3 = kde(e3,npoints);
+    a4,b4 = kde(e4,npoints);
+    x = [-2:0.01:2]
+    p = plot(x,sqrt(4-x.^2)/(2*pi),"r-",
+        [b1], a1,"b-",
+        [b2], a2,"g-",
+        [b3], a3,"y-",
+        [b4], a4,"-")
+    setattr(p, "title", "Demo5 (kde): n=$n")
+    Winston.display(p)
+    if isa(filename,String)
+        file(p, "$(filename)_n=$n.png")
+    end
+end
 
 function demo()
     demo1()
     pause()
     demo2()
+    pause()
+    demo5()
+    pause()
 end
 
 end
