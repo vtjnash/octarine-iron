@@ -153,6 +153,31 @@ function demo5_kde(n,filename::Union(String,Nothing))
     end
 end
 
+h(x) = (x = x.*(abs(x).<2)+2.*(abs(x).>=2); sqrt(4-x.^2)/(2*pi))
+function demo5diff_kde(n,filename::Union(String,Nothing))
+    npoints = 2000
+    beta = 1
+    e1 = sample_eigs(n,beta)
+    e2 = sample_eigs(n,beta)
+    e3 = sample_eigs(n,beta)
+    e4 = sample_eigs(n,beta)
+    a1,b1 = kde(e1,npoints);
+    a2,b2 = kde(e2,npoints);
+    a3,b3 = kde(e3,npoints);
+    a4,b4 = kde(e4,npoints);
+    x = [-2:0.01:2]
+    p = plot([b1], a1-h([b1]),"b-",
+        [b2], a2-h([b2]),"g-",
+        [b3], a3-h([b3]),"y-",
+        [b4], a4-h([b4]),"-")
+    println("mean $(mean((a1-h([b1])).^2))")
+    setattr(p, "title", "Demo5 error term (kde): n=$n")
+    Winston.display(p)
+    if isa(filename,String)
+        file(p, "$(filename)_n=$n.png")
+    end
+end
+
 function demo()
     demo1()
     pause()
